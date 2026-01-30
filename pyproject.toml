@@ -3,7 +3,7 @@ name = "ragtime"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.13"
 dependencies = [
     "aiohappyeyeballs==2.6.1",
     "aiohttp==3.13.3",
@@ -29,6 +29,8 @@ dependencies = [
     "langchain-classic==1.0.1",
     "langchain-community==0.4.1",
     "langchain-core==1.2.7",
+    "langchain-openai>=1.1.7",
+    "langchain-qdrant>=1.1.0",
     "langchain-text-splitters==1.1.0",
     "langgraph==1.0.7",
     "langgraph-checkpoint==4.0.0",
