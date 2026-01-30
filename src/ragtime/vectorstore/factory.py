@@ -6,7 +6,7 @@ def get_vector_store() -> VectorStore:
     config = load_config()
 
     if config.vector_store.provider == "qdrant":
-        return create_qdrant_store()
+        return create_qdrant_store(config.vector_store)
 
     raise ValueError(f"Unknown: ${config.vector_store.provider}")
 

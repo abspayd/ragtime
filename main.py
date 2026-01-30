@@ -1,10 +1,10 @@
-import multiprocessing
+from langchain_openai import ChatOpenAI
 from os import environ
 from pydantic import SecretStr
-
 from ragtime.config import load_config, get_settings
+from ragtime.vectorstore.factory import get_vector_store
+import multiprocessing
 
-from langchain_openai import ChatOpenAI
 
 SERVER_URL="http://localhost:8080/v1"
 
@@ -12,10 +12,11 @@ def main():
 
     settings = get_settings()
 
-    config = load_config()
-
     print(settings)
-    print(config)
+
+    # qdrant_vectorstore = get_vector_store()
+
+    print("TODO")
 
     # local_model = "mistralai/Ministral-3-14B-Instruct-2512-GGUF:Q5_K_M"
 
