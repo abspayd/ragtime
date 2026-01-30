@@ -12,7 +12,9 @@ def main():
 
     settings = get_settings()
 
-    print(settings)
+    config = load_config()
+    print(config)
+    # print(settings)
 
     # qdrant_vectorstore = get_vector_store()
 

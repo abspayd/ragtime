@@ -2,8 +2,7 @@
 provider="qdrant"
 collection="documents"
 
-
 [llm]
 
-[embedding]
-
+[embeddings]
+model=""

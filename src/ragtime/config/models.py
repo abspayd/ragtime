@@ -2,11 +2,14 @@ from pathlib import Path
 from typing import Literal
 
 import tomllib
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, Field
 
 class ModelConfig(BaseModel):
     # TODO
     pass
+
+class EmbeddingConfig(BaseModel):
+    model: str
 
 class VectorStoreConfig(BaseModel):
     provider: Literal["qdrant"] = "qdrant"
@@ -14,11 +17,12 @@ class VectorStoreConfig(BaseModel):
 
 class AppConfig(BaseModel):
     vector_store: VectorStoreConfig = VectorStoreConfig()
+    embeddings: EmbeddingConfig
 
 def load_config(config_path: str | Path = "config.toml") -> AppConfig:
     path = Path(config_path)
     if not path.exists():
-        return AppConfig()
+        raise SystemExit(f"Config file not found: {path}")
 
     with open(path, "rb") as f:
         data = tomllib.load(f)
