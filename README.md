@@ -2,13 +2,18 @@
 
 Local RAG toolkit for document Q&A. Ingest documents, query with natural language, and chat with your local LLMs.
 
+## Status
+
+This project is under active development. See [PLAN.md](PLAN.md) for the roadmap.
+
 ## Features
 
-- **Document ingestion** - Index PDFs, text files, and markdown
-- **Semantic search** - Query your documents with natural language
-- **Local LLMs** - Works with llamacpp, ollama, or OpenAI-compatible APIs
-- **Vector storage** - Uses Qdrant for fast similarity search
-- **Interactive chat** - TUI interface for conversational Q&A
+- [x] CLI framework and config loading
+- [ ] Document ingestion (WIP)
+- [ ] Semantic search
+- [ ] LLM integration (llamacpp, ollama)
+- [ ] Vector storage (Qdrant)
+- [ ] Interactive chat TUI
 
 ## Installation
 
@@ -32,29 +37,33 @@ go build -o ragtime ./cmd/ragtime
 
 ## Quick Start
 
-1. Start Qdrant:
-   ```bash
-   docker compose up -d
-   ```
-
-2. Copy and edit the config:
+1. Copy and edit the config:
    ```bash
    cp .env.example .env
    # Edit .env with your settings
    ```
 
-3. Ingest documents:
+2. Build and run:
+   ```bash
+   go build -o ragtime ./cmd/ragtime
+   ./ragtime --help
+   ```
+
+Additional steps (once implemented):
+
+3. Start Qdrant:
+   ```bash
+   docker compose up -d
+   ```
+
+4. Ingest documents:
    ```bash
    ragtime ingest ./docs --recursive
    ```
 
-4. Query:
+5. Query or chat:
    ```bash
    ragtime query "What is the main topic?"
-   ```
-
-5. Or start an interactive chat:
-   ```bash
    ragtime chat
    ```
 
@@ -88,14 +97,15 @@ llamacpp_url="http://localhost:8081/v1"
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `ragtime ingest <path>` | Add documents to the vector store |
-| `ragtime query "<question>"` | Ask a question |
-| `ragtime chat` | Interactive chat REPL |
-| `ragtime serve` | Start HTTP API server |
-| `ragtime collections` | Manage collections |
-| `ragtime docs` | Manage indexed documents |
+| Command | Description | Status |
+|---------|-------------|--------|
+| `ragtime --help` | Show available commands | Done |
+| `ragtime ingest <path>` | Add documents to the vector store | Planned |
+| `ragtime query "<question>"` | Ask a question | Planned |
+| `ragtime chat` | Interactive chat REPL | Planned |
+| `ragtime serve` | Start HTTP API server | Planned |
+| `ragtime collections` | Manage collections | Planned |
+| `ragtime docs` | Manage indexed documents | Planned |
 
 ## License
 
