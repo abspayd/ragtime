@@ -18,12 +18,6 @@ This project is under active development. See [PLAN.md](PLAN.md) for the roadmap
 ## Installation
 
 ```bash
-go install github.com/abspayd/ragtime/cmd/ragtime@latest
-```
-
-Or build from source:
-
-```bash
 git clone https://github.com/abspayd/ragtime.git
 cd ragtime
 go build -o ragtime ./cmd/ragtime
