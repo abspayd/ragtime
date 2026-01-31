@@ -1,45 +1,43 @@
 from langchain_openai import ChatOpenAI
 from os import environ
 from pydantic import SecretStr
-from ragtime.config import load_config, get_settings
+from ragtime.config.env import get_env
+from ragtime.config.models import get_config, init_config
+from ragtime.models.chat_models import get_chat_model
+from ragtime.models.embeddings import get_embeddings
 from ragtime.vectorstore.factory import get_vector_store
-import multiprocessing
 
 
 SERVER_URL="http://localhost:8080/v1"
 
 def main():
-
-    settings = get_settings()
-
-    config = load_config()
-    print(config)
     # print(settings)
 
-    # qdrant_vectorstore = get_vector_store()
 
-    print("TODO")
+    init_config()
 
-    # local_model = "mistralai/Ministral-3-14B-Instruct-2512-GGUF:Q5_K_M"
+    env = get_env()
+    config = get_config()
 
-    # llm = ChatOpenAI(
-    #     base_url=SERVER_URL,
-    #     api_key=SecretStr("not-needed"),
-    #     model=local_model,
-    #     temperature=0.5,
-    # )
+    qdrant_vectorstore = get_vector_store()
 
-    # messages = [
-    #     (
-    #         "system",
-    #         "You are a specialist in translating sentences into a much longer, wordier form. Your job is to make sentences much more complicated than they need to be.",
-    #     ),
-    #     ("human", "Hello! My name is Taylor."),
-    # ]
+    chat_model = get_chat_model()
 
-    # ai_msg = llm.invoke(messages)
-    # print(ai_msg.content)
+    messages = [
+        (
+            "system",
+            "You are an expert programmer who specializes in python. You are great at answering questions, and always do so in a very factual manner. You always check your work before giving final answers."
+         ),
+        (
+            "human",
+            "Hello."
+        )
+    ]
 
+    response = chat_model.invoke(messages)
+
+    print(response)
 
 if __name__ == "__main__":
     main()
+

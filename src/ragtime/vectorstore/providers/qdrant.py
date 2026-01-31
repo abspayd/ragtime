@@ -1,19 +1,31 @@
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
-from ragtime.config.models import VectorStoreConfig
-from ragtime.config.settings import get_settings
+from ragtime.config.models import VectorStoreConfig, get_config
+from ragtime.config.env import get_env
+from ragtime.models.embeddings import get_embeddings
 
-def create_qdrant_store(config: VectorStoreConfig) -> QdrantVectorStore:
-    settings = get_settings()
+def create_qdrant_store() -> QdrantVectorStore:
+    config = get_config()
+    env = get_env()
 
-    client = QdrantClient(
-        url=settings.qdrant_url,
-        api_key=settings.qdrant_api_key,
-    )
+    try:
+        client = QdrantClient(
+            url=env.qdrant_url,
+            api_key=env.qdrant_api_key,
+        )
+    except Exception as e:
+        raise SystemExit(f"Failed to create Qdrant client:\n{e}")
 
-    return QdrantVectorStore(
-        client=client,
-        collection_name=config.collection_name,
-        embedding=None
-    )
+    embedding = get_embeddings()
+
+    try:
+        vectorstore = QdrantVectorStore(
+            client=client,
+            collection_name=config.vector_store.collection_name,
+            embedding=embedding,
+        )
+        return vectorstore
+    except Exception as e:
+        raise SystemExit(f"Failed to create vector store:\n{e}")
+
 

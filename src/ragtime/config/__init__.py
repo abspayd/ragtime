@@ -1,13 +1,14 @@
 """Configuration module"""
 
-from ragtime.config.settings import Settings, get_settings
-from ragtime.config.models import AppConfig, ModelConfig, EmbeddingConfig, load_config
+from ragtime.config.env import Env, get_env
+from ragtime.config.models import AppConfig, ChatModelConfig, EmbeddingConfig, get_config, init_config
 
 __all__ = [
-    "Settings",
-    "get_settings",
+    "Env",
+    "get_env",
     "AppConfig",
-    "ModelConfig",
+    "ChatModelConfig",
     "EmbeddingConfig",
-    "load_config",
+    "get_config",
+    "init_config",
 ]

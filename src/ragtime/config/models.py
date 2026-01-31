@@ -1,14 +1,16 @@
+from functools import lru_cache
 from pathlib import Path
-from typing import Literal
 
 import tomllib
-from pydantic import BaseModel, ValidationError, Field
+from typing import Literal
+from pydantic import BaseModel, ValidationError
 
-class ModelConfig(BaseModel):
-    # TODO
-    pass
+class ChatModelConfig(BaseModel):
+    provider: Literal["ollama", "llamacpp"]
+    model: str
 
 class EmbeddingConfig(BaseModel):
+    provider: Literal["ollama", "llamacpp"]
     model: str
 
 class VectorStoreConfig(BaseModel):
@@ -18,8 +20,12 @@ class VectorStoreConfig(BaseModel):
 class AppConfig(BaseModel):
     vector_store: VectorStoreConfig = VectorStoreConfig()
     embeddings: EmbeddingConfig
+    chat_model: ChatModelConfig
 
-def load_config(config_path: str | Path = "config.toml") -> AppConfig:
+_config: AppConfig | None = None
+
+def init_config(config_path: str | Path = "config.toml") -> None:
+    global _config
     path = Path(config_path)
     if not path.exists():
         raise SystemExit(f"Config file not found: {path}")
@@ -28,7 +34,7 @@ def load_config(config_path: str | Path = "config.toml") -> AppConfig:
         data = tomllib.load(f)
 
     try:
-        return AppConfig.model_validate(data)
+        _config = AppConfig.model_validate(data)
     except ValidationError as e:
         errors = []
         for err in e.errors():
@@ -36,3 +42,10 @@ def load_config(config_path: str | Path = "config.toml") -> AppConfig:
             errors.append(f"  {loc}: {err['msg']}")
 
         raise SystemExit(f"Invalid config in \"{path}\": \n" + "\n".join(errors) )
+
+@lru_cache
+def get_config() -> AppConfig:
+    if _config is None:
+        raise SystemExit("Config not initialized.")
+    return _config
+

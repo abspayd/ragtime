@@ -2,7 +2,10 @@
 provider="qdrant"
 collection="documents"
 
-[llm]
+[chat_model]
+provider="llamacpp"
+model="mistralai/Ministral-3-14B-Instruct-2512-GGUF:Q5_K_M"
 
 [embeddings]
-model=""
+provider="llamacpp"
+model="nomic-embed-text-v1.5"
