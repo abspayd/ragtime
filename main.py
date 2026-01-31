@@ -1,19 +1,9 @@
-from langchain_openai import ChatOpenAI
-from os import environ
-from pydantic import SecretStr
 from ragtime.config.env import get_env
 from ragtime.config.models import get_config, init_config
 from ragtime.models.chat_models import get_chat_model
-from ragtime.models.embeddings import get_embeddings
 from ragtime.vectorstore.factory import get_vector_store
 
-
-SERVER_URL="http://localhost:8080/v1"
-
 def main():
-    # print(settings)
-
-
     init_config()
 
     env = get_env()
