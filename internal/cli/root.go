@@ -8,6 +8,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/abspayd/ragtime/internal/config"
+	"github.com/abspayd/ragtime/internal/logger"
 	"github.com/abspayd/ragtime/internal/models"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
@@ -15,6 +16,8 @@ import (
 
 var (
 	cfgFile string
+	verbose bool
+	logFile string
 
 	rootCmd = &cobra.Command{
 		Use:   "ragtime",
@@ -30,7 +33,14 @@ var (
 Ingest documents, query with natural language, and chat with your local LLMs.
 		`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return initConfig()
+			if err := initLogs(); err != nil {
+				return err
+			}
+			if err := initConfig(); err != nil {
+				return err
+			}
+
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -61,12 +71,28 @@ Ingest documents, query with natural language, and chat with your local LLMs.
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
+		if logger.Log != nil {
+			logger.Log.Error("An error occurred", "error", err)
+		}
 		os.Exit(1)
 	}
 }
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "config.toml", "Path to config.toml file")
+	rootCmd.PersistentFlags().StringVarP(&logFile, "log", "l", "logs/ragtime.log", "Path to log file")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Include more details in the logs")
+}
+
+func initLogs() error {
+	file, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		return err
+	}
+
+	logger.New(file, verbose)
+
+	return nil
 }
 
 func initConfig() error {
