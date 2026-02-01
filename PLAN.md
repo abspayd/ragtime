@@ -65,11 +65,11 @@ github.com/joho/godotenv
 
 ### Verification
 
-- [ ] `go build ./cmd/ragtime` succeeds
-- [ ] `ragtime --help` shows available commands
-- [ ] `ragtime init` creates config.toml template
-- [ ] Config loads from existing `config.toml`
-- [ ] Env loads from existing `.env`
+- [x] `go build ./cmd/ragtime` succeeds
+- [x] `ragtime --help` shows available commands
+- [x] `ragtime init` creates config.toml template
+- [x] Config loads from existing `config.toml`
+- [x] Env loads from existing `.env`
 
 ---
 

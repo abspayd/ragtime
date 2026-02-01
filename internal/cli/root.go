@@ -1,11 +1,14 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
 
 	"github.com/BurntSushi/toml"
 	"github.com/abspayd/ragtime/internal/config"
+	"github.com/abspayd/ragtime/internal/models"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 )
@@ -30,6 +33,27 @@ Ingest documents, query with natural language, and chat with your local LLMs.
 			return initConfig()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+
+			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+			defer cancel()
+
+			client := models.NewOpenAIClient("gpt-oss", config.Config.ChatModelConfig.BaseURL, "")
+			resp, err := client.Chat(ctx, []models.Message{
+				{
+					Role:    "user",
+					Content: "Hello",
+				},
+			})
+
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(resp)
+			for _, choice := range resp.Choices {
+				fmt.Printf("%s: %s\n", choice.Message.Role, choice.Message.Content)
+			}
+
 			return nil
 		},
 	}
