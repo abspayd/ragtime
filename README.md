@@ -11,7 +11,7 @@ This project is under active development. See [PLAN.md](PLAN.md) for the roadmap
 - [x] CLI framework and config loading
 - [ ] Document ingestion (WIP)
 - [ ] Semantic search
-- [ ] LLM integration (llamacpp, ollama)
+- [x] LLM integration (llamacpp, ollama)
 - [ ] Vector storage (Qdrant)
 - [ ] Interactive chat TUI
 
