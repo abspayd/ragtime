@@ -88,21 +88,6 @@ github.com/joho/godotenv
 | `internal/vectorstore/types.go` | Document, SearchResult types |
 | `internal/vectorstore/qdrant/client.go` | Qdrant client |
 
-### Key Design: Single OpenAI-compatible client
-
-```go
-// Works with llamacpp, ollama, AND OpenAI
-func NewClient(baseURL, apiKey, model string) *OpenAIClient
-
-// Factory routes by provider
-func NewClientFromConfig(cfg *Config, env *Env) Client {
-    switch cfg.ChatModel.Provider {
-    case "llamacpp": return NewClient(env.LlamaCPPURL, "", cfg.ChatModel.Model)
-    case "ollama":   return NewClient(env.OllamaURL+"/v1", "", cfg.ChatModel.Model)
-    case "openai":   return NewClient("https://api.openai.com/v1", env.OpenAIAPIKey, cfg.ChatModel.Model)
-    }
-}
-```
 
 ### Dependencies
 
@@ -112,9 +97,9 @@ github.com/qdrant/go-client
 
 ### Verification
 
-- [ ] LLM client gets response from llamacpp
+- [x] LLM client gets response from llamacpp
 - [ ] LLM streaming works (SSE parsing)
-- [ ] Embedding client generates vectors
+- [x] Embedding client generates vectors
 - [ ] Qdrant: create collection, upsert, search
 
 ---
@@ -132,7 +117,9 @@ github.com/qdrant/go-client
 | `internal/document/loader/file.go` | Plain text/markdown loader |
 | `internal/document/loader/pdf.go` | PDF via pdftotext subprocess |
 | `internal/document/chunker/chunker.go` | Chunker interface |
-| `internal/document/chunker/recursive.go` | Recursive text splitter |
+| `internal/document/chunker/text.go` | Text splitter |
+| `internal/document/chunker/code.go` | Tree-sitter code chunker |
+| `internal/document/chunker/queries/*.scm` | Per-language tree-sitter queries |
 | `internal/document/pipeline.go` | Orchestrates load→chunk→embed→store |
 | `internal/cli/ingest.go` | `ragtime ingest` command |
 
@@ -145,6 +132,57 @@ func (l *PDFLoader) Load(ctx context.Context, path string) (string, error) {
     return string(out), nil
 }
 ```
+
+### Code Chunking (tree-sitter with fallback)
+
+Use tree-sitter queries to extract semantic chunks from code. Each language gets a `.scm` query file—no new Go code needed per language.
+
+```
+internal/document/chunker/
+├── chunker.go          # Chunker interface
+├── recursive.go        # Text splitter (prose)
+├── code.go             # Generic tree-sitter chunker
+└── queries/            # .scm files, one per language
+    ├── go.scm
+    ├── python.scm
+    ├── javascript.scm
+    └── ...
+```
+
+**Query files define chunk boundaries:**
+
+```scheme
+;; queries/go.scm
+(function_declaration) @chunk
+(method_declaration) @chunk
+(type_declaration) @chunk
+
+;; queries/python.scm
+(function_definition) @chunk
+(class_definition) @chunk
+```
+
+**Generic chunker with fallback:**
+
+```go
+type CodeChunker struct {
+    queries map[string][]byte  // language -> query file contents
+}
+
+func (c *CodeChunker) Chunk(lang, source string) ([]Chunk, error) {
+    query, ok := c.queries[lang]
+    if !ok {
+        // Fallback: recursive text splitting for unknown languages
+        return c.fallbackChunk(source)
+    }
+    return c.treesitterChunk(lang, source, query)
+}
+```
+
+**Benefits:**
+- Add new language support by dropping in a `.scm` file
+- Chunks align with semantic boundaries (functions, classes)
+- Falls back gracefully for unsupported languages
 
 ### Verification
 

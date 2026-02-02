@@ -7,10 +7,12 @@ import (
 	"os/signal"
 
 	"github.com/BurntSushi/toml"
+	"github.com/abspayd/ragtime/internal/cli/ingest"
 	"github.com/abspayd/ragtime/internal/config"
 	"github.com/abspayd/ragtime/internal/logger"
 	"github.com/abspayd/ragtime/internal/models"
 	"github.com/joho/godotenv"
+	"github.com/qdrant/go-client/qdrant"
 	"github.com/spf13/cobra"
 )
 
@@ -47,8 +49,8 @@ Ingest documents, query with natural language, and chat with your local LLMs.
 			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 			defer cancel()
 
-			client := models.NewOpenAIClient("gpt-oss", config.Config.ChatModelConfig.BaseURL, "")
-			resp, err := client.Chat(ctx, []models.Message{
+			chatClient := models.NewOpenAIClient("gpt-oss", config.Config.ChatModelConfig.BaseURL, "")
+			chatResp, err := chatClient.Chat(ctx, []models.Message{
 				{
 					Role:    "user",
 					Content: "Hello",
@@ -59,10 +61,26 @@ Ingest documents, query with natural language, and chat with your local LLMs.
 				return err
 			}
 
-			fmt.Println(resp)
-			for _, choice := range resp.Choices {
+			fmt.Println(chatResp)
+			for _, choice := range chatResp.Choices {
 				fmt.Printf("%s: %s\n", choice.Message.Role, choice.Message.Content)
 			}
+
+			embeddingsClient := models.NewOpenAIClient(config.Config.EmbeddingConfig.Model, config.Config.EmbeddingConfig.BaseURL, "")
+
+			embeddingsResp, err := embeddingsClient.Embed(ctx, "Hello, this is a test for how embeddings work")
+			if err != nil {
+				return err
+			}
+
+			qdrant.NewClient(&qdrant.Config{
+				Host:   config.Config.VectorstoreConfig.BaseURL,
+				Port:   6664,
+				APIKey: os.Getenv("QDRANT_API_KEY"),
+			})
+
+			_ = embeddingsResp
+			// fmt.Printf("embeddings: %v\n", embeddingsResp)
 
 			return nil
 		},
@@ -79,9 +97,11 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "config.toml", "Path to config.toml file")
-	rootCmd.PersistentFlags().StringVarP(&logFile, "log", "l", "logs/ragtime.log", "Path to log file")
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Include more details in the logs")
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "config.toml", "path to config.toml file")
+	rootCmd.PersistentFlags().StringVarP(&logFile, "log", "l", "logs/ragtime.log", "path to log file")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "include more details in the logs")
+
+	rootCmd.AddCommand(ingest.IngestCmd)
 }
 
 func initLogs() error {

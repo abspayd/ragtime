@@ -40,3 +40,22 @@ type Usage struct {
 	PromptTokens     int `json:"prompt_tokens"`
 	TotalTokens      int `json:"total_tokens"`
 }
+
+type EmbeddingsRequest struct {
+	Input      string `json:"input"`
+	Model      string `json:"model"`
+	Dimensions int    `json:"dimensions,omitempty"`
+}
+
+type EmbeddingsResponse struct {
+	Data []Embedding `json:"data"`
+}
+
+type Embedding struct {
+	Index     int       `json:"index"`
+	Embedding []float64 `json:"embedding"`
+	Usage     Usage     `json:"usage"`
+}
+
+type Data struct {
+}
