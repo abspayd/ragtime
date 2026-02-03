@@ -6,5 +6,6 @@ func UploadDocuments(paths []string) error {
 			return err
 		}
 	}
+
 	return nil
 }
