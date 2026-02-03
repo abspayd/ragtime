@@ -1,32 +1,27 @@
 package documents
 
 import (
+	"context"
 	"os"
 )
 
-func Load(path string) error {
-	stat, err := os.Stat(path)
+func Load(ctx context.Context, path string) ([]byte, error) {
+	file, err := os.Open(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	var files []string
-	if stat.IsDir() {
-		panic("TODO: implement")
+	contents := os.ReadFile(path)
 
-		files = listDir(path)
-	} else {
-		files = []string{path}
-	}
-
-	return nil
+	return nil, nil
 }
 
 func listDir(path string) []string {
-
 	if isGitDir(path) {
 		return listGitDir(path)
 	}
+
+	// TODO: get each file in the path (respect ignore glob if provided)
 
 	return nil
 }

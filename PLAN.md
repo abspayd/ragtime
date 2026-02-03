@@ -1,6 +1,6 @@
-# Ragtime Go Rewrite Plan
+# Project plan
 
-Rebuild the RAG application from Python/LangChain to Go with a CLI interface, HTTP API, and TUI chat.
+Build a RAG application in Go with a CLI interface, HTTP API, and TUI chat.
 
 ## Project Structure
 
@@ -13,7 +13,7 @@ ragtime/
 │   ├── llm/                      # OpenAI-compatible client
 │   ├── embedding/                # Embedding client
 │   ├── vectorstore/qdrant/       # Qdrant client
-│   ├── document/                 # Loaders, chunkers
+│   ├── document/                 # Chunking + ingest pipeline
 │   ├── rag/                      # Retriever, engine
 │   ├── agent/                    # State machine
 │   ├── server/                   # HTTP API
@@ -38,7 +38,7 @@ ragtime/
 | `internal/cli/root.go` | Cobra root + global flags |
 | `internal/cli/init.go` | `ragtime init` - create default config |
 
-### Config Types (mirror existing Python)
+### Config Types
 
 ```go
 type Config struct {
@@ -112,42 +112,33 @@ github.com/qdrant/go-client
 
 | File | Purpose |
 |------|---------|
-| `internal/document/types.go` | Source, Chunk types |
-| `internal/document/loader/loader.go` | Loader interface + registry |
-| `internal/document/loader/file.go` | Plain text/markdown loader |
-| `internal/document/loader/pdf.go` | PDF via pdftotext subprocess |
-| `internal/document/chunker/chunker.go` | Chunker interface |
-| `internal/document/chunker/text.go` | Text splitter |
-| `internal/document/chunker/code.go` | Tree-sitter code chunker |
-| `internal/document/chunker/queries/*.scm` | Per-language tree-sitter queries |
-| `internal/document/pipeline.go` | Orchestrates load→chunk→embed→store |
+| `internal/document/types.go` | Chunk type + metadata |
+| `internal/document/pipeline.go` | Orchestrates read→chunk→embed→store |
+| `internal/document/text_chunker.go` | Text splitter (prose) |
+| `internal/document/code_chunker.go` | Tree-sitter code chunker |
+| `internal/document/queries/*.scm` | Per-language tree-sitter queries |
 | `internal/cli/ingest.go` | `ragtime ingest` command |
 
-### PDF Extraction (subprocess)
+### File Loading
+
+File loading with PDF support.
 
 ```go
-func (l *PDFLoader) Load(ctx context.Context, path string) (string, error) {
-    cmd := exec.CommandContext(ctx, "pdftotext", "-layout", path, "-")
-    out, _ := cmd.Output()
-    return string(out), nil
+func (p *Pipeline) readFile(ctx context.Context, path string) ([]byte, error) {
+    if filepath.Ext(path) == ".pdf" {
+        return p.extractPDF(ctx, path)
+    }
+    return os.ReadFile(path)
+}
+
+func (p *Pipeline) extractPDF(ctx context.Context, path string) ([]byte, error) {
+    return exec.CommandContext(ctx, "pdftotext", "-layout", path, "-").Output()
 }
 ```
 
 ### Code Chunking (tree-sitter with fallback)
 
 Use tree-sitter queries to extract semantic chunks from code. Each language gets a `.scm` query file—no new Go code needed per language.
-
-```
-internal/document/chunker/
-├── chunker.go          # Chunker interface
-├── recursive.go        # Text splitter (prose)
-├── code.go             # Generic tree-sitter chunker
-└── queries/            # .scm files, one per language
-    ├── go.scm
-    ├── python.scm
-    ├── javascript.scm
-    └── ...
-```
 
 **Query files define chunk boundaries:**
 
@@ -169,13 +160,13 @@ type CodeChunker struct {
     queries map[string][]byte  // language -> query file contents
 }
 
-func (c *CodeChunker) Chunk(lang, source string) ([]Chunk, error) {
+func (c *CodeChunker) Chunk(lang string, content []byte) ([]Chunk, error) {
     query, ok := c.queries[lang]
     if !ok {
-        // Fallback: recursive text splitting for unknown languages
-        return c.fallbackChunk(source)
+        // Fallback: text splitting for unknown languages
+        return c.fallbackChunk(content)
     }
-    return c.treesitterChunk(lang, source, query)
+    return c.treesitterChunk(lang, content, query)
 }
 ```
 
@@ -332,6 +323,5 @@ require (
 ## Notes
 
 - Keep existing `config.toml` and `.env.example` formats
-- Python code in `src/ragtime/` can coexist during transition
 - PDF extraction uses system `pdftotext` (poppler-utils) - no CGO needed
 - TypeScript scraper can be added later as separate service in `extractors/scraper/`
