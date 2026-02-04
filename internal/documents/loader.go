@@ -3,17 +3,16 @@ package documents
 import (
 	"context"
 	"os"
+	"path/filepath"
 )
 
 func Load(ctx context.Context, path string) ([]byte, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
+
+	if filepath.Ext(path) == "pdf" {
+		panic("unimplemented")
 	}
 
-	contents := os.ReadFile(path)
-
-	return nil, nil
+	return os.ReadFile(path)
 }
 
 func listDir(path string) []string {
