@@ -2,18 +2,18 @@ package documents
 
 import (
 	"bufio"
-	"os"
+	"bytes"
 )
 
-func TextChunks(path string) ([]Chunk, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
+func TextChunks(text []byte) ([]Chunk, error) {
+	chunks := []Chunk{}
+
+	reader := bytes.NewReader(text)
+	scanner := bufio.NewScanner(reader)
+
+	scanner.Split(bufio.ScanLines)
 
 	chunkIndex := 0
-	chunks := []Chunk{}
-	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		chunks = append(chunks, Chunk{
 			Index: chunkIndex,

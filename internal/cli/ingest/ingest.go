@@ -1,7 +1,11 @@
 package ingest
 
 import (
+	"github.com/abspayd/ragtime/internal/config"
 	"github.com/abspayd/ragtime/internal/documents"
+	"github.com/abspayd/ragtime/internal/logger"
+	"github.com/abspayd/ragtime/internal/models"
+	"github.com/qdrant/go-client/qdrant"
 	"github.com/spf13/cobra"
 )
 
@@ -16,7 +20,21 @@ var (
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			if err := documents.UploadDocuments(args); err != nil {
+			embeddingsClient := models.NewOpenAIClient(config.Config.EmbeddingConfig.Model, config.Config.ChatModelConfig.BaseURL, "")
+
+			qdrantClient, err := qdrant.NewClient(&qdrant.Config{
+				Host:   config.Config.VectorstoreConfig.BaseURL,
+				Port:   6334,
+				APIKey: "",
+				UseTLS: false,
+			})
+			if err != nil {
+				return err
+			}
+
+			logger.Log.Info("connected to qdrant")
+
+			if err := documents.UploadDocuments(args, config.Config.VectorstoreConfig.Collection, embeddingsClient, qdrantClient); err != nil {
 				return err
 			}
 
