@@ -3,6 +3,7 @@ package documents
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 
@@ -40,7 +41,7 @@ func UploadDocuments(paths []string, collection string, embeddingsClient *models
 			&qdrant.CreateCollection{
 				CollectionName: collection,
 				VectorsConfig: qdrant.NewVectorsConfig(&qdrant.VectorParams{
-					Size:     512,
+					Size:     768, // TODO: validate this against what the embedding model returns
 					Distance: qdrant.Distance_Cosine,
 				}),
 			})
@@ -67,25 +68,32 @@ func UploadDocuments(paths []string, collection string, embeddingsClient *models
 			if err != nil {
 				return err
 			}
+			logger.Log.Info("retrieved embeddings")
 
-			qdrantClient.Upsert(ctx, &qdrant.UpsertPoints{
-				CollectionName: collection,
-				Wait:           new(bool),
-				Points: []*qdrant.PointStruct{
-					{
-						Id:      qdrant.NewIDNum(uint64(chunk.Index)),
-						Payload: qdrant.NewValueMap(map[string]any{"path": path}),
-						Vectors: qdrant.NewVectors(embeddings.Data), // TODO: unwrap embedding data and upload to qdrant
-					},
-				},
-				Ordering:         &qdrant.WriteOrdering{},
-				ShardKeySelector: &qdrant.ShardKeySelector{},
-				UpdateFilter:     &qdrant.Filter{},
-			})
-			// logger.Log.Info("retrieved embeddings", "embeddings", embeddings.Data)
+			for _, embedding := range embeddings.Data {
+				payload := map[string]*qdrant.Value{
+					"path": {Kind: &qdrant.Value_StringValue{StringValue: path}},
+					"text": {Kind: &qdrant.Value_StringValue{StringValue: string(chunk.Text)}},
+				}
+				response, err := Store(collection, chunk.Index, embedding, payload, qdrantClient)
+				if err != nil {
+					return err
+				}
+
+				logger.Log.Info("stored embeddings", "response", response)
+			}
 		}
-
 	}
+
+	info, err := qdrantClient.GetCollectionInfo(ctx, collection)
+	if err != nil {
+		return err
+	}
+	logger.Log.Info("collection info", "info", info)
+
+	qdrantClient.Close()
+
+	fmt.Println("Done")
 
 	return nil
 }

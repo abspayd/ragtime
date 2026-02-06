@@ -15,6 +15,13 @@ func TextChunks(text []byte) ([]Chunk, error) {
 
 	chunkIndex := 0
 	for scanner.Scan() {
+
+		text := scanner.Bytes()
+
+		if len(text) == 0 {
+			continue
+		}
+
 		chunks = append(chunks, Chunk{
 			Index: chunkIndex,
 			Text:  scanner.Bytes(),

@@ -42,20 +42,16 @@ type Usage struct {
 }
 
 type EmbeddingsRequest struct {
-	Input      string `json:"input"`
-	Model      string `json:"model"`
-	Dimensions int    `json:"dimensions,omitempty"`
+	Input string `json:"input"`
+	Model string `json:"model"`
 }
 
 type EmbeddingsResponse struct {
-	Data []Embedding `json:"data"`
+	Data  []Embedding `json:"data"`
+	Usage Usage       `json:"usage"`
 }
 
 type Embedding struct {
 	Index     int       `json:"index"`
-	Embedding []float64 `json:"embedding"`
-	Usage     Usage     `json:"usage"`
-}
-
-type Data struct {
+	Embedding []float32 `json:"embedding"`
 }
