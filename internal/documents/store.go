@@ -9,6 +9,9 @@ import (
 	"github.com/qdrant/go-client/qdrant"
 )
 
+func BulkStore(collection string, embeddings []models.Embedding) {
+}
+
 func Store(collection string, index int, embedding models.Embedding, payload map[string]*qdrant.Value, client *qdrant.Client) (*qdrant.UpdateResult, error) {
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
