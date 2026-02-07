@@ -12,7 +12,7 @@ import (
 func BulkStore(collection string, embeddings []models.Embedding) {
 }
 
-func Store(collection string, index int, embedding models.Embedding, payload map[string]*qdrant.Value, client *qdrant.Client) (*qdrant.UpdateResult, error) {
+func Store(collection string, id string, embedding models.Embedding, payload map[string]*qdrant.Value, client *qdrant.Client) (*qdrant.UpdateResult, error) {
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
@@ -21,7 +21,7 @@ func Store(collection string, index int, embedding models.Embedding, payload map
 		CollectionName: collection,
 		Points: []*qdrant.PointStruct{
 			{
-				Id:      qdrant.NewIDNum(uint64(index)),
+				Id:      qdrant.NewIDUUID(id),
 				Payload: payload,
 				Vectors: qdrant.NewVectors(embedding.Embedding...),
 			},

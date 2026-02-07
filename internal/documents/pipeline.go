@@ -9,6 +9,7 @@ import (
 
 	"github.com/abspayd/ragtime/internal/logger"
 	"github.com/abspayd/ragtime/internal/models"
+	"github.com/google/uuid"
 	"github.com/qdrant/go-client/qdrant"
 )
 
@@ -31,7 +32,7 @@ func UploadDocuments(paths []string, collection string, embeddingsClient *models
 
 	err := buildCollection(ctx, collection, embeddingsClient, qdrantClient)
 	if err != nil {
-		return fmt.Errorf("Failed to validate or build collection \"s\": %w", err)
+		return fmt.Errorf("Failed to validate or build collection \"%s\": %w", collection, err)
 	}
 
 	for _, path := range paths {
@@ -59,7 +60,9 @@ func UploadDocuments(paths []string, collection string, embeddingsClient *models
 					"path": {Kind: &qdrant.Value_StringValue{StringValue: path}},
 					"text": {Kind: &qdrant.Value_StringValue{StringValue: string(chunk.Text)}},
 				}
-				response, err := Store(collection, chunk.Index, embedding, payload, qdrantClient)
+
+				uuid := uuid.NewString()
+				response, err := Store(collection, uuid, embedding, payload, qdrantClient)
 				if err != nil {
 					return fmt.Errorf("Failed to store chunks: %w", err)
 				}
