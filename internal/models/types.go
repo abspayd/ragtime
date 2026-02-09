@@ -1,6 +1,19 @@
 package models
 
-import "net/http"
+import (
+	"context"
+	"net/http"
+)
+
+type Embedder interface {
+	Embed(ctx context.Context, input string) ([][]float32, error)
+	EmbedBatch(ctx context.Context, input []string) ([][]float32, error)
+	VectorSize(ctx context.Context) (int, error)
+}
+
+type ChatModel interface {
+	Chat(ctx context.Context, messages []string) ([]Message, error)
+}
 
 type OpenAIClient struct {
 	BaseURL    string
@@ -44,6 +57,11 @@ type Usage struct {
 type EmbeddingsRequest struct {
 	Input string `json:"input"`
 	Model string `json:"model"`
+}
+
+type EmbeddingsBatchRequest struct {
+	Input []string `json:"input"`
+	Model string   `json:"model"`
 }
 
 type EmbeddingsResponse struct {

@@ -24,7 +24,7 @@ func TextChunks(text []byte) ([]Chunk, error) {
 
 		chunks = append(chunks, Chunk{
 			Index: chunkIndex,
-			Text:  scanner.Bytes(),
+			Text:  scanner.Text(),
 		})
 
 		chunkIndex++

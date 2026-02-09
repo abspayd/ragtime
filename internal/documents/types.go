@@ -7,5 +7,16 @@ type Document struct {
 
 type Chunk struct {
 	Index int
-	Text  []byte
+	Text  string
+}
+
+type EmbeddingsBatch struct {
+	Index      int
+	Embeddings [][]float32
+	Chunks     []Chunk
+}
+
+type ChunkBatch struct {
+	Index  int
+	Chunks []Chunk
 }

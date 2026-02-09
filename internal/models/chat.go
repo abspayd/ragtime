@@ -6,7 +6,7 @@ import (
 	"github.com/abspayd/ragtime/internal/logger"
 )
 
-func (c *OpenAIClient) Chat(ctx context.Context, messages []Message) (*ChatResponse, error) {
+func (c *OpenAIClient) Chat(ctx context.Context, messages []Message) ([]Message, error) {
 	req := ChatRequest{
 		Messages: messages,
 		Model:    c.Model,
@@ -20,5 +20,10 @@ func (c *OpenAIClient) Chat(ctx context.Context, messages []Message) (*ChatRespo
 
 	logger.Log.Info("Response from server", "response", resp)
 
-	return &resp, nil
+	var response_messages []Message
+	for _, choice := range resp.Choices {
+		response_messages = append(response_messages, choice.Message)
+	}
+
+	return response_messages, nil
 }

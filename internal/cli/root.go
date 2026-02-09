@@ -50,20 +50,18 @@ Ingest documents, query with natural language, and chat with your local LLMs.
 			defer cancel()
 
 			chatClient := models.NewOpenAIClient("gpt-oss", config.Config.ChatModelConfig.BaseURL, "")
-			chatResp, err := chatClient.Chat(ctx, []models.Message{
+			messages, err := chatClient.Chat(ctx, []models.Message{
 				{
 					Role:    "user",
 					Content: "Hello",
 				},
 			})
-
 			if err != nil {
 				return err
 			}
 
-			fmt.Println(chatResp)
-			for _, choice := range chatResp.Choices {
-				fmt.Printf("%s: %s\n", choice.Message.Role, choice.Message.Content)
+			for _, message := range messages {
+				fmt.Printf("%s: %s\n", message.Role, message.Content)
 			}
 
 			embeddingsClient := models.NewOpenAIClient(config.Config.EmbeddingConfig.Model, config.Config.EmbeddingConfig.BaseURL, "")

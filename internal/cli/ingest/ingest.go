@@ -20,7 +20,7 @@ var (
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			embeddingsClient := models.NewOpenAIClient(config.Config.EmbeddingConfig.Model, config.Config.ChatModelConfig.BaseURL, "")
+			embeddingsClient := models.NewOpenAIClient(config.Config.EmbeddingConfig.Model, config.Config.EmbeddingConfig.BaseURL, "")
 
 			qdrantClient, err := qdrant.NewClient(&qdrant.Config{
 				Host:   config.Config.VectorstoreConfig.BaseURL,
