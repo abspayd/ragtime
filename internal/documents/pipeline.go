@@ -258,10 +258,10 @@ func buildCollection(ctx context.Context, collection string, embedder models.Emb
 
 func removeExistingForPath(ctx context.Context, collection, path string, client *qdrant.Client) error {
 	if client == nil {
-		return fmt.Errorf("Unable to remove existing data for path \"%s\": vector store client not initialized")
+		return fmt.Errorf("Unable to remove existing data for path \"%s\": vector store client not initialized", path)
 	}
 
-	result, err := client.Delete(ctx, &qdrant.DeletePoints{
+	_, err := client.Delete(ctx, &qdrant.DeletePoints{
 		CollectionName: collection,
 		Points: &qdrant.PointsSelector{
 			PointsSelectorOneOf: &qdrant.PointsSelector_Filter{
@@ -277,8 +277,6 @@ func removeExistingForPath(ctx context.Context, collection, path string, client 
 	if err != nil {
 		return fmt.Errorf("Something went wrong deleting existing data: %w", err)
 	}
-
-	logger.Log.Info("removeExistingForPath", "result", result)
 
 	return nil
 }
