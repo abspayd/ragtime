@@ -10,13 +10,18 @@ type Chunk struct {
 	Text  string
 }
 
+type ChunkBatch struct {
+	Index  int
+	Chunks []Chunk
+}
+
 type EmbeddingsBatch struct {
 	Index      int
 	Embeddings [][]float32
 	Chunks     []Chunk
 }
 
-type ChunkBatch struct {
-	Index  int
-	Chunks []Chunk
+type VectorStoreBatch struct {
+	EmbeddingsBatch EmbeddingsBatch
+	Path            string
 }

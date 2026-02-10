@@ -13,18 +13,12 @@ import (
 	"github.com/qdrant/go-client/qdrant"
 )
 
-const maxBatchSize = 32
+const MAX_BATCH_SIZE = 32
 
 func UploadDocuments(paths []string, collection string, embedder models.Embedder, qdrantClient *qdrant.Client) error {
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
-
-	if embedder == nil {
-		err := errors.New("Unable to upload documents: missing embeddings model client")
-		logger.Log.Error(err.Error())
-		return err
-	}
 
 	if qdrantClient == nil {
 		err := errors.New("Unable to upload documents: missing vector store client")
@@ -53,31 +47,38 @@ func UploadDocuments(paths []string, collection string, embedder models.Embedder
 		}
 		logger.Log.Info("extracted text chunks")
 
+		// build channels for pipeline workers
 		chunkCh := make(chan ChunkBatch)
 		defer close(chunkCh)
 
 		embedCh := make(chan EmbeddingsBatch)
-		errCh := make(chan error)
+		embedErrCh := make(chan error)
 
-		go embeddingsWorker(ctx, embedder, chunkCh, embedCh, errCh)
+		storeCh := make(chan VectorStoreBatch)
+		storeErrCh := make(chan error)
 
-		var embeddings_batches []*EmbeddingsBatch
+		go embeddingsWorker(ctx, embedder, chunkCh, embedCh, embedErrCh)
+		go vectorStoreWorker(collection, qdrantClient, storeCh, storeErrCh)
 
+		// extract chunks, genereate embeddings, then store them
 		chunk_batch := ChunkBatch{
 			Index:  0,
 			Chunks: make([]Chunk, 0),
 		}
 		for _, chunk := range chunks {
 			chunk_batch.Chunks = append(chunk_batch.Chunks, chunk)
-			if len(chunk_batch.Chunks) >= maxBatchSize {
+			if len(chunk_batch.Chunks) >= MAX_BATCH_SIZE {
 				chunkCh <- chunk_batch
 
-				new_embeddings, err := receieveEmbeddings(embedCh, errCh)
+				embeddings_batch, err := receieveEmbeddings(embedCh, embedErrCh)
 				if err != nil {
 					return fmt.Errorf("Error embedding chunks: %w", err)
 				}
 
-				embeddings_batches = append(embeddings_batches, new_embeddings)
+				storeCh <- VectorStoreBatch{
+					EmbeddingsBatch: *embeddings_batch,
+					Path:            path,
+				}
 
 				chunk_batch = ChunkBatch{
 					Index:  chunk_batch.Index + 1,
@@ -89,36 +90,22 @@ func UploadDocuments(paths []string, collection string, embedder models.Embedder
 		if len(chunk_batch.Chunks) > 0 {
 			chunkCh <- chunk_batch
 
-			new_embeddings, err := receieveEmbeddings(embedCh, errCh)
+			embeddings_batch, err := receieveEmbeddings(embedCh, embedErrCh)
 			if err != nil {
 				return fmt.Errorf("Error embedding chunks: %w", err)
 			}
 
-			embeddings_batches = append(embeddings_batches, new_embeddings)
-		}
-
-		var points []*qdrant.PointStruct
-		for _, embedding_batch := range embeddings_batches {
-
-			for index, embedding := range embedding_batch.Embeddings {
-				points = append(points, &qdrant.PointStruct{
-					Id: qdrant.NewIDUUID(uuid.NewString()),
-					Payload: map[string]*qdrant.Value{
-						"index": {Kind: &qdrant.Value_IntegerValue{IntegerValue: int64(index)}},
-						"path":  {Kind: &qdrant.Value_StringValue{StringValue: path}},
-						"text":  {Kind: &qdrant.Value_StringValue{StringValue: string(embedding_batch.Chunks[index].Text)}},
-					},
-					Vectors: qdrant.NewVectors(embedding...),
-				})
+			storeCh <- VectorStoreBatch{
+				EmbeddingsBatch: *embeddings_batch,
+				Path:            path,
 			}
 		}
 
-		response, err := Store(collection, points, qdrantClient)
-		if err != nil {
-			return fmt.Errorf("Failed to store chunks: %w", err)
+		close(storeCh)
+		for err := range storeErrCh {
+			return fmt.Errorf("Error storing data in vector store: %w", err)
 		}
 
-		logger.Log.Debug("UploadDocuments", "response", response)
 	}
 
 	return nil
@@ -161,6 +148,44 @@ func receieveEmbeddings(in <-chan EmbeddingsBatch, errCh <-chan error) (*Embeddi
 	case err := <-errCh:
 		return nil, fmt.Errorf("Error embedding chunks: %w", err)
 	}
+}
+
+func vectorStoreWorker(collection string, qdrantClient *qdrant.Client, in <-chan VectorStoreBatch, errCh chan<- error) {
+
+	if qdrantClient == nil {
+		errCh <- fmt.Errorf("Failed to start vetctor store worker: vectore store client not initialized")
+		close(errCh)
+		return
+	}
+
+	for vectorestore_batch := range in {
+		path := vectorestore_batch.Path
+		batch := vectorestore_batch.EmbeddingsBatch
+
+		var points []*qdrant.PointStruct
+		for index, embedding := range batch.Embeddings {
+
+			points = append(points, &qdrant.PointStruct{
+				Id: qdrant.NewIDUUID(uuid.NewString()),
+				Payload: map[string]*qdrant.Value{
+					"index": {Kind: &qdrant.Value_IntegerValue{IntegerValue: int64(batch.Chunks[index].Index)}},
+					"path":  {Kind: &qdrant.Value_StringValue{StringValue: path}},
+					"text":  {Kind: &qdrant.Value_StringValue{StringValue: string(batch.Chunks[index].Text)}},
+				},
+				Vectors: qdrant.NewVectors(embedding...),
+			})
+
+		}
+
+		_, err := Store(collection, points, qdrantClient)
+		if err != nil {
+			errCh <- fmt.Errorf("An error occurred during vector store batch: %w", err)
+			continue
+
+		}
+	}
+
+	close(errCh)
 }
 
 func buildCollection(ctx context.Context, collection string, embedder models.Embedder, qdrantClient *qdrant.Client) error {
