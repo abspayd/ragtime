@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 
 	"github.com/abspayd/ragtime/internal/logger"
 	"github.com/abspayd/ragtime/internal/models"
@@ -33,7 +34,15 @@ func UploadDocuments(paths []string, collection string, embedder models.Embedder
 
 	for _, path := range paths {
 
-		// TODO: delete existing data for this path in Qdrant
+		path, err := filepath.Abs(path)
+		if err != nil {
+			return fmt.Errorf("Unable to resolve path \"%s\": %w", path, err)
+		}
+
+		err = removeExistingForPath(ctx, collection, path, qdrantClient)
+		if err != nil {
+			return fmt.Errorf("Enabled to remove existing data: %w", err)
+		}
 
 		data, err := Load(ctx, path)
 		if err != nil {
@@ -237,6 +246,39 @@ func buildCollection(ctx context.Context, collection string, embedder models.Emb
 			return fmt.Errorf("Unable to create vector store collection: %w", err)
 		}
 	}
+
+	qdrantClient.CreateFieldIndex(ctx, &qdrant.CreateFieldIndexCollection{
+		CollectionName: collection,
+		FieldName:      "path",
+		FieldType:      qdrant.FieldType_FieldTypeKeyword.Enum(),
+	})
+
+	return nil
+}
+
+func removeExistingForPath(ctx context.Context, collection, path string, client *qdrant.Client) error {
+	if client == nil {
+		return fmt.Errorf("Unable to remove existing data for path \"%s\": vector store client not initialized")
+	}
+
+	result, err := client.Delete(ctx, &qdrant.DeletePoints{
+		CollectionName: collection,
+		Points: &qdrant.PointsSelector{
+			PointsSelectorOneOf: &qdrant.PointsSelector_Filter{
+				Filter: &qdrant.Filter{
+					Must: []*qdrant.Condition{
+						qdrant.NewMatch("path", path),
+					},
+				},
+			},
+		},
+	})
+
+	if err != nil {
+		return fmt.Errorf("Something went wrong deleting existing data: %w", err)
+	}
+
+	logger.Log.Info("removeExistingForPath", "result", result)
 
 	return nil
 }
