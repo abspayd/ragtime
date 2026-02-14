@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"path/filepath"
 
+	"github.com/abspayd/ragtime/internal/documents/splitters"
 	"github.com/abspayd/ragtime/internal/logger"
 	"github.com/abspayd/ragtime/internal/models"
 	"github.com/google/uuid"
@@ -50,7 +51,9 @@ func UploadDocuments(paths []string, collection string, embedder models.Embedder
 		}
 		logger.Log.Info("loaded file")
 
-		chunks, err := TextChunks(data)
+		splitter := splitters.GetSplitter(splitters.SplitterNameForPath(path))
+
+		chunks, err := splitter(data)
 		if err != nil {
 			return fmt.Errorf("Failed to chunk text: %w", err)
 		}
@@ -72,7 +75,7 @@ func UploadDocuments(paths []string, collection string, embedder models.Embedder
 		// extract chunks, genereate embeddings, then store them
 		chunk_batch := ChunkBatch{
 			Index:  0,
-			Chunks: make([]Chunk, 0),
+			Chunks: make([]splitters.Chunk, 0),
 		}
 		for _, chunk := range chunks {
 			chunk_batch.Chunks = append(chunk_batch.Chunks, chunk)
@@ -91,7 +94,7 @@ func UploadDocuments(paths []string, collection string, embedder models.Embedder
 
 				chunk_batch = ChunkBatch{
 					Index:  chunk_batch.Index + 1,
-					Chunks: make([]Chunk, 0),
+					Chunks: make([]splitters.Chunk, 0),
 				}
 			}
 		}
@@ -183,7 +186,6 @@ func vectorStoreWorker(collection string, qdrantClient *qdrant.Client, in <-chan
 				},
 				Vectors: qdrant.NewVectors(embedding...),
 			})
-
 		}
 
 		_, err := Store(collection, points, qdrantClient)
