@@ -2,12 +2,12 @@ package splitters
 
 import "path/filepath"
 
-var SplitterRegistery = map[string]SplitterFunction{
+var SplitterRegistery = map[string]SplitterFunc{
 	"":   TextChunks,
 	"md": MarkdownChunks,
 }
 
-func Register(name string, callback SplitterFunction) {
+func Register(name string, callback SplitterFunc) {
 	if SplitterRegistery[name] != nil {
 		return
 	}
@@ -16,7 +16,7 @@ func Register(name string, callback SplitterFunction) {
 
 // GetSplitter retrieves a splitter function for the provided extension name.
 // If no splitter was found, the plain text splitter is returned.
-func GetSplitter(name string) SplitterFunction {
+func GetSplitter(name string) SplitterFunc {
 	value, ok := SplitterRegistery[name]
 	if !ok {
 		return SplitterRegistery[""]

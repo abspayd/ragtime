@@ -17,6 +17,7 @@ import (
 
 const MAX_BATCH_SIZE = 32
 
+// UploadDocuments takes a list of file paths and uploads them to a qdrant collection
 func UploadDocuments(paths []string, collection string, embedder models.Embedder, qdrantClient *qdrant.Client) error {
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
