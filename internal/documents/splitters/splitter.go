@@ -3,7 +3,7 @@ package splitters
 import (
 	"bytes"
 
-	"github.com/abspayd/ragtime/internal/grammars/markdown"
+	"github.com/abspayd/ragtime/internal/documents/grammars/markdown"
 	tree_sitter "github.com/tree-sitter/go-tree-sitter"
 )
 

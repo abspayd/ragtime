@@ -16,7 +16,6 @@ var (
 	IngestCmd = &cobra.Command{
 		Use:   "ingest path...",
 		Short: "Add documents to the vector store",
-		Long:  "Add documents for your LLMs to use as a reference",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 

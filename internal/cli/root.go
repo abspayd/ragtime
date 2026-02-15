@@ -7,6 +7,7 @@ import (
 	"os/signal"
 
 	"github.com/BurntSushi/toml"
+	"github.com/abspayd/ragtime/internal/cli/chat"
 	"github.com/abspayd/ragtime/internal/cli/ingest"
 	"github.com/abspayd/ragtime/internal/config"
 	"github.com/abspayd/ragtime/internal/logger"
@@ -100,6 +101,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "include more details in the logs")
 
 	rootCmd.AddCommand(ingest.IngestCmd)
+	rootCmd.AddCommand(chat.ChatCmd)
 }
 
 func initLogs() error {
