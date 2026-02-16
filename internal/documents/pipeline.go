@@ -52,12 +52,7 @@ func UploadDocuments(paths []string, collection string, embedder models.Embedder
 		}
 		logger.Log.Info("loaded file")
 
-		splitter := splitters.GetSplitter(splitters.SplitterNameForPath(path))
-
-		chunks, err := splitter(data)
-		if err != nil {
-			return fmt.Errorf("Failed to chunk text: %w", err)
-		}
+		chunks := splitters.Split(data, path)
 		logger.Log.Info("extracted text chunks")
 
 		// build channels for pipeline workers

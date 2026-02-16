@@ -9,14 +9,14 @@ require (
 	github.com/qdrant/go-client v1.16.2
 	github.com/spf13/cobra v1.10.2
 	github.com/tree-sitter/go-tree-sitter v0.25.0
+	github.com/tree-sitter/tree-sitter-go v0.25.0
+	github.com/tree-sitter/tree-sitter-php v0.24.2
 )
 
 require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/mattn/go-pointer v0.0.1 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	github.com/tree-sitter-grammars/tree-sitter-markdown v0.5.2 // indirect
-	github.com/tree-sitter/tree-sitter-go v0.25.0 // indirect
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect

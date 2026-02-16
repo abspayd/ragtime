@@ -1,19 +1,15 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 	"os"
-	"os/signal"
 
 	"github.com/BurntSushi/toml"
 	"github.com/abspayd/ragtime/internal/cli/chat"
 	"github.com/abspayd/ragtime/internal/cli/ingest"
 	"github.com/abspayd/ragtime/internal/config"
 	"github.com/abspayd/ragtime/internal/logger"
-	"github.com/abspayd/ragtime/internal/models"
 	"github.com/joho/godotenv"
-	"github.com/qdrant/go-client/qdrant"
 	"github.com/spf13/cobra"
 )
 
@@ -45,44 +41,44 @@ Ingest documents, query with natural language, and chat with your local LLMs.
 
 			return nil
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		// RunE: func(cmd *cobra.Command, args []string) error {
 
-			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-			defer cancel()
+		// 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+		// 	defer cancel()
 
-			chatClient := models.NewOpenAIClient("gpt-oss", config.Config.ChatModelConfig.BaseURL, "")
-			messages, err := chatClient.Chat(ctx, []models.Message{
-				{
-					Role:    "user",
-					Content: "Hello",
-				},
-			})
-			if err != nil {
-				return err
-			}
+		// 	chatClient := models.NewOpenAIClient("gpt-oss", config.Config.ChatModelConfig.BaseURL, "")
+		// 	messages, err := chatClient.Chat(ctx, []models.Message{
+		// 		{
+		// 			Role:    "user",
+		// 			Content: "Hello",
+		// 		},
+		// 	})
+		// 	if err != nil {
+		// 		return err
+		// 	}
 
-			for _, message := range messages {
-				fmt.Printf("%s: %s\n", message.Role, message.Content)
-			}
+		// 	for _, message := range messages {
+		// 		fmt.Printf("%s: %s\n", message.Role, message.Content)
+		// 	}
 
-			embeddingsClient := models.NewOpenAIClient(config.Config.EmbeddingConfig.Model, config.Config.EmbeddingConfig.BaseURL, "")
+		// 	embeddingsClient := models.NewOpenAIClient(config.Config.EmbeddingConfig.Model, config.Config.EmbeddingConfig.BaseURL, "")
 
-			embeddingsResp, err := embeddingsClient.Embed(ctx, "Hello, this is a test for how embeddings work")
-			if err != nil {
-				return err
-			}
+		// 	embeddingsResp, err := embeddingsClient.Embed(ctx, "Hello, this is a test for how embeddings work")
+		// 	if err != nil {
+		// 		return err
+		// 	}
 
-			qdrant.NewClient(&qdrant.Config{
-				Host:   config.Config.VectorstoreConfig.BaseURL,
-				Port:   6664,
-				APIKey: os.Getenv("QDRANT_API_KEY"),
-			})
+		// 	qdrant.NewClient(&qdrant.Config{
+		// 		Host:   config.Config.VectorstoreConfig.BaseURL,
+		// 		Port:   6664,
+		// 		APIKey: os.Getenv("QDRANT_API_KEY"),
+		// 	})
 
-			_ = embeddingsResp
-			// fmt.Printf("embeddings: %v\n", embeddingsResp)
+		// 	_ = embeddingsResp
+		// 	// fmt.Printf("embeddings: %v\n", embeddingsResp)
 
-			return nil
-		},
+		// 	return nil
+		// },
 	}
 )
 

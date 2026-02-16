@@ -2,21 +2,33 @@ package splitters
 
 import (
 	"bytes"
+	"fmt"
+	"path/filepath"
+	"unsafe"
 
 	"github.com/abspayd/ragtime/internal/documents/grammars/markdown"
-	"github.com/abspayd/ragtime/internal/logger"
 	tree_sitter "github.com/tree-sitter/go-tree-sitter"
 	tree_sitter_go "github.com/tree-sitter/tree-sitter-go/bindings/go"
+	tree_sitter_php "github.com/tree-sitter/tree-sitter-php/bindings/go"
 )
 
 const MAX_CHUNK_LENGTH = 1024
 
-func TextChunks(text []byte) ([]Chunk, error) {
+var language_path_extensions = map[string]string{
+	".php": "php",
+	".go":  "go",
+	".md":  "markdown",
+	".mdx": "markdown",
+	".c":   "c",
+	".h":   "c",
+}
+
+func TextChunks(text []byte) []Chunk {
 
 	chunks := []Chunk{}
 	splitText(text, []byte("\n\n"), &chunks)
 
-	return chunks, nil
+	return chunks
 }
 
 func splitText(text []byte, delimeter []byte, chunks *[]Chunk) {
@@ -43,12 +55,30 @@ func splitText(text []byte, delimeter []byte, chunks *[]Chunk) {
 	}
 }
 
-func GoChunks(text []byte) ([]Chunk, error) {
+func Split(text []byte, path string) []Chunk {
+
+	var grammar unsafe.Pointer
+	switch language_path_extensions[filepath.Ext(path)] {
+	case "go":
+		grammar = tree_sitter_go.Language()
+	case "markdown":
+		fmt.Println("Using markdown splitter")
+		grammar = markdown.Language()
+	case "php":
+		grammar = tree_sitter_php.LanguagePHP()
+	}
+
+	if grammar == nil {
+		fmt.Println("Using plaintext splitter")
+		return TextChunks(text)
+	}
+
+	ts_language := tree_sitter.NewLanguage(grammar)
 
 	parser := tree_sitter.NewParser()
 	defer parser.Close()
 
-	parser.SetLanguage(tree_sitter.NewLanguage(tree_sitter_go.Language()))
+	parser.SetLanguage(ts_language)
 
 	tree := parser.Parse(text, nil)
 	defer tree.Close()
@@ -58,27 +88,7 @@ func GoChunks(text []byte) ([]Chunk, error) {
 	chunks := make([]Chunk, 0)
 	splitTree(root, text, &chunks)
 
-	return chunks, nil
-}
-
-func MarkdownChunks(text []byte) ([]Chunk, error) {
-
-	parser := tree_sitter.NewParser()
-	defer parser.Close()
-
-	parser.SetLanguage(tree_sitter.NewLanguage(markdown.MarkdownLanguage()))
-
-	tree := parser.Parse(text, nil)
-	defer tree.Close()
-
-	root := tree.RootNode()
-
-	chunks := make([]Chunk, 0)
-	splitTree(root, text, &chunks)
-
-	logger.Log.Info("Using markdown splitter")
-
-	return chunks, nil
+	return chunks
 }
 
 // splitTree recursively retrieves chunks from text using a tree sitter parser.

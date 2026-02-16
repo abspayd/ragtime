@@ -6,7 +6,7 @@ collection="documents"
 [chat_model]
 provider="llamacpp"
 base_url="http://localhost:8080"
-model="mistralai/Ministral-3-14B-Instruct-2512-GGUF:Q5_K_M"
+model="ministral-3-14b"
 
 [embeddings]
 provider="llamacpp"

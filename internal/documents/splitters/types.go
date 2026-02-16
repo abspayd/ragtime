@@ -1,6 +1,6 @@
 package splitters
 
-type SplitterFunc func(text []byte) ([]Chunk, error)
+type SplitterFunc func(text []byte, language string) ([]Chunk, error)
 
 type Chunk struct {
 	Index int

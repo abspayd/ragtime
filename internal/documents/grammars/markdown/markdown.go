@@ -8,6 +8,6 @@ package markdown
 import "C"
 import "unsafe"
 
-func MarkdownLanguage() unsafe.Pointer {
+func Language() unsafe.Pointer {
 	return unsafe.Pointer(C.tree_sitter_markdown())
 }
