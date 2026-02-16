@@ -1,7 +1,10 @@
 package markdown
 
-// #include "tree_sitter/parser.h"
-// extern const TSLanguage *tree_sitter_markdown(void);
+// #cgo CFLAGS: -std=c11 -fPIC
+// #include "tree-sitter-markdown/tree-sitter-markdown/src/parser.c"
+// #if __has_include("tree-sitter-markdown/tree-sitter-markdown/src/scanner.c")
+// #include "tree-sitter-markdown/tree-sitter-markdown/src/scanner.c"
+// #endif
 import "C"
 import "unsafe"
 

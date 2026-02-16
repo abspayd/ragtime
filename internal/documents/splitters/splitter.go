@@ -4,7 +4,9 @@ import (
 	"bytes"
 
 	"github.com/abspayd/ragtime/internal/documents/grammars/markdown"
+	"github.com/abspayd/ragtime/internal/logger"
 	tree_sitter "github.com/tree-sitter/go-tree-sitter"
+	tree_sitter_go "github.com/tree-sitter/tree-sitter-go/bindings/go"
 )
 
 const MAX_CHUNK_LENGTH = 1024
@@ -41,6 +43,24 @@ func splitText(text []byte, delimeter []byte, chunks *[]Chunk) {
 	}
 }
 
+func GoChunks(text []byte) ([]Chunk, error) {
+
+	parser := tree_sitter.NewParser()
+	defer parser.Close()
+
+	parser.SetLanguage(tree_sitter.NewLanguage(tree_sitter_go.Language()))
+
+	tree := parser.Parse(text, nil)
+	defer tree.Close()
+
+	root := tree.RootNode()
+
+	chunks := make([]Chunk, 0)
+	splitTree(root, text, &chunks)
+
+	return chunks, nil
+}
+
 func MarkdownChunks(text []byte) ([]Chunk, error) {
 
 	parser := tree_sitter.NewParser()
@@ -55,6 +75,8 @@ func MarkdownChunks(text []byte) ([]Chunk, error) {
 
 	chunks := make([]Chunk, 0)
 	splitTree(root, text, &chunks)
+
+	logger.Log.Info("Using markdown splitter")
 
 	return chunks, nil
 }

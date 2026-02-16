@@ -5,6 +5,7 @@ import "path/filepath"
 var SplitterRegistery = map[string]SplitterFunc{
 	"":   TextChunks,
 	"md": MarkdownChunks,
+	"go": GoChunks,
 }
 
 func Register(name string, callback SplitterFunc) {
