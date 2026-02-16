@@ -6,3 +6,5 @@ __pycache__
 
 logs/
 qdrant_data/
+
+ragtime

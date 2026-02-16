@@ -8,6 +8,7 @@ import (
 
 	"github.com/abspayd/ragtime/internal/documents/grammars/markdown"
 	tree_sitter "github.com/tree-sitter/go-tree-sitter"
+	tree_sitter_c "github.com/tree-sitter/tree-sitter-c/bindings/go"
 	tree_sitter_go "github.com/tree-sitter/tree-sitter-go/bindings/go"
 	tree_sitter_php "github.com/tree-sitter/tree-sitter-php/bindings/go"
 )
@@ -66,10 +67,11 @@ func Split(text []byte, path string) []Chunk {
 		grammar = markdown.Language()
 	case "php":
 		grammar = tree_sitter_php.LanguagePHP()
+	case "c":
+		grammar = tree_sitter_c.Language()
 	}
 
 	if grammar == nil {
-		fmt.Println("Using plaintext splitter")
 		return TextChunks(text)
 	}
 
