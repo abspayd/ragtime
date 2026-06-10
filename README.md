@@ -1,106 +1,99 @@
-# Ragtime
+# ragtime
 
-Local RAG toolkit for document Q&A. Ingest documents, query with natural language, and chat with your local LLMs.
+A RAG utility for local document and code queries
 
-## Status
-
-This project is under active development. See [PLAN.md](PLAN.md) for the roadmap.
+`ragtime` ingests your files locally into a Qdrant database, generates embeddings with an OpenAI-compatible model server, and answers questions using the stored document context.
 
 ## Features
 
-- [x] CLI framework and config loading
-- [ ] Document ingestion (WIP)
-- [ ] Semantic search
-- [x] LLM integration (llamacpp, ollama)
-- [ ] Vector storage (Qdrant)
-- [ ] Interactive chat TUI
+- Ingest one or more local files into a Qdrant collection
+- Generate embeddings with llama.cpp, Ollama, or OpenAI-compatible endpoints
+- Improve the answering capabilities of your local models using your local datasets
+- Uses tree-sitter to chunk code and markdown source files into pieces queryable by your local LLMs
+- TOML config and `.env` support
 
-## Installation
+## Install
 
-```bash
+**Prerequisites:** Go 1.25.6 or later ([golang.org/dl](https://go.dev/dl/)), [Docker](https://www.docker.com/) for Qdrant, and a running OpenAI-compatible chat and embeddings server
+
+```sh
 git clone https://github.com/abspayd/ragtime.git
 cd ragtime
 go build -o ragtime ./cmd/ragtime
 ```
 
-### Dependencies
+## Usage
 
-- [Qdrant](https://qdrant.tech/) - Vector database
-- [llamacpp](https://github.com/ggerganov/llama.cpp) or [Ollama](https://ollama.ai/) - Local LLM inference
-- `pdftotext` (optional) - For PDF extraction (`poppler-utils` package)
+Start Qdrant:
 
-## Quick Start
+```sh
+make up
+```
+Ingest files into the Qdrant database:
 
-1. Copy and edit the config:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your settings
-   ```
+```sh
+./ragtime ingest path/to/file.md path/to/source.go
+```
 
-2. Build and run:
-   ```bash
-   go build -o ragtime ./cmd/ragtime
-   ./ragtime --help
-   ```
+Ask a question:
 
-Additional steps (once implemented):
+```sh
+./ragtime chat "What does this project do?"
+```
 
-3. Start Qdrant:
-   ```bash
-   docker compose up -d
-   ```
+| Command | Description |
+|---------|-------------|
+| `ingest path...` | Add files to the vector store |
+| `chat message...` | Chat with an LLM using RAG search |
 
-4. Ingest documents:
-   ```bash
-   ragtime ingest ./docs --recursive
-   ```
+**Global flags:**
 
-5. Query or chat:
-   ```bash
-   ragtime query "What is the main topic?"
-   ragtime chat
-   ```
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-c, --config` | `config.toml` | Path to the config file |
+| `-l, --log` | `logs/ragtime.log` | Path to the log file |
+| `-v, --verbose` | `false` | Include more details in the logs |
 
-## Configuration
+**`ingest` flags:**
 
-### config.toml
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--no-git-ignore` | `false` | Do not ignore files in `.gitignore` |
+| `-I, --ignore` | | Glob pattern to exclude files or directories |
+
+## Config
 
 ```toml
 [vector_store]
 provider = "qdrant"
+base_url = "localhost"
 collection = "documents"
 
 [chat_model]
-provider = "llamacpp"  # or "ollama"
-model = "gpt-oss"
+provider = "llamacpp"
+base_url = "http://localhost:8080"
+model = "ministral-3-14b"
 
 [embeddings]
-provider = "llamacpp"  # or "ollama"
+provider = "llamacpp"
+base_url = "http://localhost:8080"
 model = "nomic-embed-text-v1.5"
 ```
 
-### .env
+Optional environment variables:
 
-```bash
-qdrant_url="http://localhost:6333"
-qdrant_api_key="MY_KEY"
-
-ollama_url="http://localhost:11434"
-llamacpp_url="http://localhost:8081/v1"
+```sh
+QDRANT_API_KEY="MY_KEY"
+OPENAI_API_KEY="MY_KEY"
 ```
 
-## Commands
+## Notes
 
-| Command | Description | Status |
-|---------|-------------|--------|
-| `ragtime --help` | Show available commands | Done |
-| `ragtime ingest <path>` | Add documents to the vector store | Planned |
-| `ragtime query "<question>"` | Ask a question | Planned |
-| `ragtime chat` | Interactive chat REPL | Planned |
-| `ragtime serve` | Start HTTP API server | Planned |
-| `ragtime collections` | Manage collections | Planned |
-| `ragtime docs` | Manage indexed documents | Planned |
+- Qdrant runs on ports `6333` and `6334` when started with `make up`.
+- The ingest command recreates stored chunks for a file path before uploading new chunks.
+- Directory ingestion and PDF extraction are not implemented yet.
 
-## License
+## Future plans
 
-MIT
+- Add an interactive chat TUI
+- Add agent and tool support
