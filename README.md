@@ -24,23 +24,6 @@ go build -o ragtime ./cmd/ragtime
 
 ## Usage
 
-Start Qdrant:
-
-```sh
-make up
-```
-Ingest files into the Qdrant database:
-
-```sh
-./ragtime ingest path/to/file.md path/to/source.go
-```
-
-Ask a question:
-
-```sh
-./ragtime chat "What does this project do?"
-```
-
 | Command | Description |
 |---------|-------------|
 | `ingest path...` | Add files to the vector store |
@@ -60,6 +43,26 @@ Ask a question:
 |------|---------|-------------|
 | `--no-git-ignore` | `false` | Do not ignore files in `.gitignore` |
 | `-I, --ignore` | | Glob pattern to exclude files or directories |
+
+### Examples
+
+Start Qdrant:
+
+```sh
+make up
+```
+Ingest files into the Qdrant database:
+
+```sh
+./ragtime ingest path/to/file.md path/to/source.go
+```
+
+Ask a question:
+
+```sh
+./ragtime chat "What does this project do?"
+```
+
 
 ## Config
 
@@ -89,11 +92,11 @@ OPENAI_API_KEY="MY_KEY"
 
 ## Notes
 
-- Qdrant runs on ports `6333` and `6334` when started with `make up`.
+- By default, Qdrant runs on ports `6333` and `6334` when started with `make up`.
 - The ingest command recreates stored chunks for a file path before uploading new chunks.
-- Directory ingestion and PDF extraction are not implemented yet.
 
-## Future plans
+## Future
 
+- Support `ingest` for PDF files
 - Add an interactive chat TUI
 - Add agent and tool support
